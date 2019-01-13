@@ -1,5 +1,6 @@
 import argparse
 import driveapi
+import sheetsapi
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
@@ -18,17 +19,31 @@ if __name__ == "__main__":
         "--drive_folder_id",
         required=True,
         help="Folder ID of the Google Drive Folder to analyze")
+    p.add_argument(
+        "-of",
+        "--output_file",
+        required=True,
+        help="Name of the output Google Sheets file to generate." +
+        "It will be generated in the folder specified by --drive_folder_id")
     args = p.parse_args()
     # Setup the Google Drive API. This authenticates the application
     # using the given Google Drive credentials.
     dapi = driveapi.DriveAPI(args.drive_credentials, args.drive_folder_id)
+    sapi = sheetsapi.SheetsAPI(args.sheets_credentials)
     # Get a list of files in the given drive folder id.
     # TODO: To be replaced with Google Sheets API query that reads these
     # files and generates a new sheets with the analyzed data.
     files = dapi.query_files()
+    data = []
     for idx, ifile in enumerate(files):
-        print "{idx}. {name} ({mimeType}), {file_id}".format(
-            idx=idx + 1,
-            name=ifile["name"],
-            mimeType=ifile["mimeType"],
-            file_id=ifile["id"])
+        if ifile["name"] == args.output_file:
+            print "Info: Deleting  {idx}. {name}".format(
+                idx=idx + 1, name=ifile["name"])
+            dapi.delete_file(ifile["id"])
+            continue
+        print "Info: Analyzing {idx}. {name}, {file_id}".format(
+            idx=idx + 1, name=ifile["name"], file_id=ifile["id"])
+        values = sapi.query_doc(ifile["id"])
+        data.extend(values)
+    print "Info: Generating output file: {}".format(args.output_file)
+    dapi.create_output_file(args.output_file)

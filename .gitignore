@@ -104,5 +104,5 @@ venv.bak/
 .mypy_cache/
 
 # Google Oauth2 token
-token.json
+*.token.json
 
