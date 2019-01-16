@@ -2,6 +2,7 @@ from __future__ import print_function
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
+import os
 
 # If modifying these scopes, delete the file token.json.
 # Read, write and manage permissions.
@@ -9,12 +10,13 @@ _SCOPES = "https://www.googleapis.com/auth/drive"
 
 
 class DriveAPI(object):
-    def __init__(self, credentials, folder_id):
+    def __init__(self, credentials, folder_id, cache_dir):
         # The credentials.json file for Google Drive.
         self._credentials = credentials
         # The Google Drive Folder ID that has the Google Sheets
         # to be analyzed.
         self._folder_id = folder_id
+        self._cache_dir = cache_dir
         self._setup()
 
     def _build_query(self):
@@ -47,7 +49,7 @@ class DriveAPI(object):
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        store = file.Storage("drive.token.json")
+        store = file.Storage(os.path.join(self._cache_dir, "drive.token.json"))
         creds = store.get()
         if not creds or creds.invalid:
             flow = client.flow_from_clientsecrets(self._credentials, _SCOPES)

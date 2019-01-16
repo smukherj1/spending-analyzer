@@ -105,4 +105,5 @@ venv.bak/
 
 # Google Oauth2 token
 *.token.json
+run.sh
 

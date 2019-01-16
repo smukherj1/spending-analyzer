@@ -1,7 +1,7 @@
-from __future__ import print_function
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
+import os
 
 # If modifying these scopes, delete the file token.json.
 # Read, write and manage permissions.
@@ -13,15 +13,17 @@ SAMPLE_RANGE_NAME = 'Class Data!A2:E'
 
 
 class SheetsAPI(object):
-    def __init__(self, credentials):
+    def __init__(self, credentials, cache_dir):
         self._credentials = credentials
+        self._cache_dir = cache_dir
         self._setup()
 
     def _setup(self):
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        store = file.Storage('sheets.token.json')
+        store = file.Storage(
+            os.path.join(self._cache_dir, 'sheets.token.json'))
         creds = store.get()
         if not creds or creds.invalid:
             flow = client.flow_from_clientsecrets(self._credentials, _SCOPES)
@@ -60,3 +62,20 @@ class SheetsAPI(object):
                     "date": date
                 })
         return values
+
+    def clear_file(self, file_id):
+        sheet = self._service.spreadsheets()
+        s = sheet.get(spreadsheetId=file_id).execute()
+        sheets = s.get("sheets", [])
+        if not sheets:
+            return
+        for isheet in sheets:
+            properties = isheet.get("properties", {})
+            if not properties:
+                continue
+            sheet_title = properties.get("title", None)
+            if sheet_title is None:
+                continue
+            print "Clearing sheet: {}".format(sheet_title)
+            sheet.values().clear(
+                spreadsheetId=file_id, range=sheet_title).execute()
