@@ -27,3 +27,6 @@ pip_import(
 load("@py_deps//:requirements.bzl", "pip_install")
 
 pip_install()
+
+# The end.
+
